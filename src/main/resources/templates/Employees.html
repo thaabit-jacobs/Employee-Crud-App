@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Employees</title>
+</head>
+<body>
+
+<h2>Add Employee</h2>
+<form method="POST" th:object="${employee}">
+    <label>
+        Firstname:
+    </label>
+    <input type="text" name="emFirstName">
+    <br>
+
+    <label>
+        Lastname:
+    </label>
+    <input type="text" name="emLastName">
+    <br>
+
+    <label>
+        Email:
+    </label>
+    <input type="text" name="emEmail">
+    <br>
+
+    <input type="submit">
+</form>
+
+<table>
+    <tr>
+       <td>Employee Id</td>
+        <td>Employee Firstname</td>
+        <td>Employee Lastname</td>
+        <td>Employee Email</td>
+        <td>Action</td>
+    </tr>
+
+    <tr th:each="employee : ${employeeList}">
+        <td th:text="${employee.emId}">0</td>
+        <td th:text="${employee.emFirstName}">Placeholder</td>
+        <td th:text="${employee.emLastName}">Placeholder</td>
+        <td th:text="${employee.emEmail}">Placeholder</td>
+        <td>
+            <p><a th:href="@{/employee/delete/{emId}(emId=${employee.emId})}" />delete</p>
+            <p><a th:href="@{/employee/update/{emId}(emId=${employee.emId})}" />update</p>
+        </td>
+
+    </tr>
+</table>
+</body>
+</html>
