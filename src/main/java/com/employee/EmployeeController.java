@@ -4,43 +4,38 @@ import com.employee.models.Employee;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
+import javax.persistence.*;
+
 
 @Slf4j
 @Controller
 @RequestMapping("/employee")
 public class EmployeeController {
 
-    private EmployeeRepo employeeRepo;
+    private EmployeeRepository employeeRepo;
+    private Long emId;
 
     @Autowired
-    public EmployeeController(EmployeeRepo employeeRepo){
+    public EmployeeController(EmployeeRepository employeeRepo){
         this.employeeRepo = employeeRepo;
     }
 
     @GetMapping
     public String getAllEmployees(Model model){
 
-        model.addAttribute("employeeList", employeeRepo.getEmployeeList());
+        model.addAttribute("employeeList", employeeRepo.findAll());
 
         return "Employees.html";
     }
 
     @PostMapping
     public String processEmployeeSubmission(Employee employee){
-        long newId = employeeRepo.generateId();
 
-        employee.setEmId(newId);
-
-        employeeRepo.addEmployee(employee);
+        employeeRepo.save(employee);
 
         log.info("created emplyeee: " + employee);
 
@@ -52,46 +47,27 @@ public class EmployeeController {
     public String deleteEmployee(@PathVariable Long emId){
         log.info("Id to be deleted: " + emId);
 
-        employeeRepo.deleteEmployee(emId);
+        employeeRepo.deleteById(emId);
 
         return "redirect:/employee";
     }
 
     @GetMapping("/update/{emId}")
-    public String updatePath(@PathVariable Long emId, HttpServletResponse response){
-
-        Cookie cookie = new Cookie("emId", emId.toString());
-
-        response.addCookie(cookie);
+    public String updatePath(@PathVariable Long emId){
+        this.emId = emId;
 
         return "UpdateEmployee";
     }
 
+    @Transactional
     @GetMapping("/updated")
-    public String updateEmployee(HttpServletRequest request,
-                                 HttpServletResponse response,
-                                 @RequestParam(name="firstName") String firstName,
+    public String updateEmployee(@RequestParam(name="firstName") String firstName,
                                  @RequestParam(name="lastName") String lastName,
                                  @RequestParam(name="email") String email){
 
-        Long emId = null;
-        Cookie[] cookies = request.getCookies();
+    employeeRepo.updateEmployeeInfo(firstName, lastName, email, this.emId);
 
-        for (Cookie cookie: cookies){
-            emId = Long.valueOf(cookie.getComment());
-        }
 
-        Cookie cookie = new Cookie("emId", null);
-        cookie.setMaxAge(0);
-        cookie.setSecure(true);
-        cookie.setHttpOnly(true);
-
-        response.addCookie(cookie);
-
-        Employee emplo = employeeRepo.updateEmployee(emId, firstName, lastName, email);
-
-        log.info("updated emploee: " + emplo);
-
-        return "redirect:/employee";
+    return "redirect:/employee";
     }
 }
